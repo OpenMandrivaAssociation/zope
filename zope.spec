@@ -1,26 +1,28 @@
 %define realVersion 2.9.6-final
 
-%define version %(echo %{realVersion} | sed -e's/-/./g')
+%define name    zope 
+%define version 2.9.8
+%define release %mkrel 1
 %define sVersion %(echo %{realVersion} | cut -d- -f1)
 
 
-Summary:        A leading open source application server
-Name:           zope
+Name:           %{name}
 Version:        %{version}
-Release:        %mkrel 2
+Release:        %{release}
+Summary:        A leading open source application server
 License:        Zope Public License (ZPL)
 Group:          System/Servers
 URL:            http://www.zope.org/
-Source0:        http://zope.org/Products/Zope/%{sVersion}/Zope-%{realVersion}.tar.bz2
+Source0:        http://zope.org/Products/Zope/%{version}/Zope-%{version}-final.tgz
 Source1:        skel.tar.bz2
 Source2:        http://www.zope.org/Members/michel/ZB/ZopeBook.tar.bz2
 Source3:        README.install.urpmi.zope
-Requires:       python >= 2.3.5
-Requires:	python-libxml2
+Requires:       python2.4
+Requires:	python2.4-libxml2
 Requires:	xpdf-tools
-BuildRequires:  python-devel >= 2.3.5
-BuildRoot:      %{_tmppath}/%{name}-%{version}-root-%(id -u -n)
+BuildRequires:  python2.4-devel
 Epoch:          1
+BuildRoot:      %{_tmppath}/%{name}-%{version}
 
 %define python /usr/bin/python
 %define zopehome /usr/lib/zope
@@ -42,7 +44,7 @@ on building the platform and Zope applications. Zope is written in Python, a
 highly-productive, object-oriented scripting language.
 
 %prep
-%setup -q -n Zope-%{realVersion}
+%setup -q -n Zope-%{version}-final
 
 
 # Add skel
@@ -59,7 +61,7 @@ rm -rf lib/python/Products/BTreeFolder2
 
 %build
 ./configure \
-  --with-python="%{python}" \
+  --with-python="%{_bindir}/python2.4" \
   --prefix="%{buildroot}%{zopehome}" \
   --no-compile
 make
