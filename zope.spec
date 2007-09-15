@@ -70,7 +70,7 @@ rm -rf lib/python/Products/BTreeFolder2
 make
 
 # process the skel directory into the buildroot
-python << EOF
+%{python} << EOF
 import py_compile, os
 files = os.popen("find lib -name '*.py'").readlines()
 for file in files:
