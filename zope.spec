@@ -20,7 +20,7 @@ BuildRequires:  python2.4-devel
 Epoch:          1
 BuildRoot:      %{_tmppath}/%{name}-%{version}
 
-%define python /usr/bin/python
+%define python /usr/bin/python2.4
 %define zopehome /usr/lib/zope
 %define softwarehome %{zopehome}/lib/python
 %define instancehome /var/lib/zope
@@ -56,7 +56,7 @@ rm -rf lib/python/Products/BTreeFolder2
 
 %build
 ./configure \
-  --with-python="%{_bindir}/python2.4" \
+  --with-python="%{python}" \
   --prefix="%{buildroot}%{zopehome}" \
   --no-compile
 make
@@ -124,22 +124,18 @@ rm -rf %{buildroot}
 %_postun_userdel zope
 
 %files
-%defattr(0644,root,root,755)
-%dir %{zopehome}
-%{zopehome}/doc
-%{zopehome}/lib
-%{zopehome}/skel
+%defattr(-,root,root)
+%{zopehome}
 
-%attr(755,root,root)/usr/bin/runzope
-%attr(755,root,root)/usr/bin/zopectl
-%attr(755,root,root) %{zopehome}/bin/*
-%attr(755,root,root) %config(noreplace) /etc/rc.d/init.d/zope
-%config(noreplace) /etc/zope.conf
-%config(noreplace) /etc/logrotate.d/zope
+%{_bindir}/runzope
+%{_bindir}/zopectl
+%{_initrddir}/zope
+%config(noreplace) %{_sysconfdir}/zope.conf
+%config(noreplace) %{_sysconfdir}/logrotate.d/zope
 
-%attr(770, %{zopeuser}, %{zopeuser}) %config(noreplace) %verify(not md5 size mtime) %{instancehome}
-%attr(770, %{zopeuser}, %{zopeuser}) %dir /var/log/zope
-%attr(755, %{zopeuser}, %{zopeuser}) %dir /var/run/zope
+%attr(-,zope,zope) %config(noreplace) %verify(not md5 size mtime) %{instancehome}
+%attr(-,zope,zope) /var/log/zope
+%attr(-,zope,zope) /var/run/zope
 
 %doc README.install.urpmi
 
