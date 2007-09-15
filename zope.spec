@@ -12,7 +12,6 @@ URL:            http://www.zope.org/
 Source0:        http://zope.org/Products/Zope/%{version}/Zope-%{version}-final.tgz
 Source1:        skel.tar.bz2
 Source2:        http://www.zope.org/Members/michel/ZB/ZopeBook.tar.bz2
-Source3:        README.install.urpmi.zope
 Requires:       python2.4
 Requires:	    python2.4-libxml2
 Requires:	    xpdf-tools
@@ -39,17 +38,26 @@ hundreds of companies and thousands of developers all over the world, working
 on building the platform and Zope applications. Zope is written in Python, a
 highly-productive, object-oriented scripting language.
 
+%package doc
+Summary:    Documentation for the Zope application server
+Group:      Networking/WWW
+Obsoletes:  %{name}-docs
+
+%description doc
+Documentation for the Z Object Programming Environment (Zope), a free, Open
+Source Python-based application server for building high-performance, dynamic
+web sites, using a powerful and simple scripting object model and
+high-performance, integrated object database.
+
 %prep
 %setup -q -n Zope-%{version}-final
+chmod 644 doc/*.txt
 
 # Add skel
 mv skel skel.bak
 tar xvjf %{SOURCE1}
 mv skel.bak/import/* skel/var/lib/zope/import/
 #rm skel/var/log/zope/README.txt skel/var/run/zope/README.txt
-
-# Prepare doc (Zope Book)
-tar xjf %{SOURCE2} 
 
 # drop file which should not be there
 rm -rf lib/python/Products/BTreeFolder2
@@ -83,9 +91,9 @@ rm -f ZServer/medusa/monitor_client_win32.py
 # Has a bogus #!/usr/local/bin/python1.4 that confuses RPM
 rm -f ZServer/medusa/test/asyn_http_bench.py
 
-cp %{SOURCE3} README.install.urpmi
 
 %install
+rm -rf %{buildroot}
 %{python} "utilities/copyzopeskel.py" \
          --sourcedir="skel" \
          --targetdir="%{buildroot}" \
@@ -107,6 +115,17 @@ make install
 # will conflict with  zope-BTreeFolder2
 rm -rf %{buildroot}/%{softwarehome}/Products/BTreeFolder2
 
+# manage documentation manually
+install -d -m 755 %{buildroot}%{_docdir}/%{name}
+tar xjf %{SOURCE2} -C %{buildroot}%{_docdir}/%{name}
+cp -pr doc/* %{buildroot}%{_docdir}/%{name}
+cat > %{buildroot}%{_docdir}/%{name}/README.install.urpmi <<EOF
+A Zope instance has been installed.  Run it via "/etc/rc.d/init.d/zope start".
+Log in via a browser on port 9080.
+You can add an administrative user when zope is stopped with the
+command "zopectl adduser admin admin_passwd".
+EOF
+
 %clean
 rm -rf %{buildroot}
 
@@ -125,6 +144,8 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
+%dir %{_docdir}/%{name}
+%{_docdir}/%{name}/README.install.urpmi
 %{zopehome}
 
 %{_bindir}/runzope
@@ -137,18 +158,7 @@ rm -rf %{buildroot}
 %attr(-,zope,zope) /var/log/zope
 %attr(-,zope,zope) /var/run/zope
 
-%doc README.install.urpmi
-
-%package docs
-Summary:    Documentation for the Zope application server
-Group:      Networking/WWW
-
-%description docs
-Documentation for the Z Object Programming Environment (Zope), a free, Open
-Source Python-based application server for building high-performance, dynamic
-web sites, using a powerful and simple scripting object model and
-high-performance, integrated object database.
-
-%files docs
-%defattr(644, root, root, 755)
-%doc ZopeBook doc
+%files doc
+%defattr(-,root,root)
+%{_docdir}/%{name}/*
+%exclude %{_docdir}/%{name}/README.install.urpmi
