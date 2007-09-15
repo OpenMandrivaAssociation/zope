@@ -1,10 +1,6 @@
-%define realVersion 2.9.6-final
-
 %define name    zope 
 %define version 2.9.8
 %define release %mkrel 1
-%define sVersion %(echo %{realVersion} | cut -d- -f1)
-
 
 Name:           %{name}
 Version:        %{version}
@@ -18,8 +14,8 @@ Source1:        skel.tar.bz2
 Source2:        http://www.zope.org/Members/michel/ZB/ZopeBook.tar.bz2
 Source3:        README.install.urpmi.zope
 Requires:       python2.4
-Requires:	python2.4-libxml2
-Requires:	xpdf-tools
+Requires:	    python2.4-libxml2
+Requires:	    xpdf-tools
 BuildRequires:  python2.4-devel
 Epoch:          1
 BuildRoot:      %{_tmppath}/%{name}-%{version}
@@ -45,7 +41,6 @@ highly-productive, object-oriented scripting language.
 
 %prep
 %setup -q -n Zope-%{version}-final
-
 
 # Add skel
 mv skel skel.bak
@@ -75,11 +70,6 @@ for file in files:
     py_compile.compile(file, file+"o", "%{zopehome}/"+file)
     py_compile.compile(file, file+"c", "%{zopehome}/"+file)
 EOF
-
-# XXX: next release...
-#env CFLAGS="$RPM_OPT_FLAGS" /usr/bin/python setup.py build
-#/usr/bin/python setup.py install --root=$RPM_BUILD_ROOT \
-#    --record=INSTALLED_FILES
 
 ## Clean sources
 #find -type d -name "tests" | xargs rm -rf
@@ -115,29 +105,10 @@ cp %{SOURCE3} README.install.urpmi
 make install
 
 # will conflict with  zope-BTreeFolder2
-rm -rf $RPM_BUILD_ROOT/%{softwarehome}/Products/BTreeFolder2
-
-#rm -rf $RPM_BUILD_ROOT
-#install -d $RPM_BUILD_ROOT{%{_bindir},%{_sbindir},%{_libdir}/zope/lib/python} \
-#    $RPM_BUILD_ROOT{/etc/rc.d/init.d,/var/log,/var/lib/zope}
-#
-#cp -a lib/python/* $RPM_BUILD_ROOT%{_libdir}/zope/lib/python
-#cp -a ZServer/ utilities/ import/ $RPM_BUILD_ROOT%{_libdir}/zope
-#find $RPM_BUILD_ROOT%{_libdir}/zope -type f -name '*.py' -or -name '*.txt' \
-#    | xargs -r rm -f
-#cp -a ZServer/medusa/test/* $RPM_BUILD_ROOT%{_libdir}/zope/ZServer/medusa/test/
-#
-#install zpasswd.py $RPM_BUILD_ROOT%{_bindir}/zpasswd
-#install z2.py $RPM_BUILD_ROOT%{_libdir}/zope
-#install %{SOURCE8} $RPM_BUILD_ROOT%{_sbindir}/zope-zserver
-#install %{SOURCE7} $RPM_BUILD_ROOT/etc/rc.d/init.d/zope
-#install var/Data.fs $RPM_BUILD_ROOT/var/lib/zope/Data.fs
-#
-#touch $RPM_BUILD_ROOT/var/log/zope
-
+rm -rf %{buildroot}/%{softwarehome}/Products/BTreeFolder2
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %pre
 %_pre_useradd zope /var/lib/zope /bin/false
@@ -145,24 +116,6 @@ rm -rf $RPM_BUILD_ROOT
 %post
 %_post_service zope
 /sbin/chkconfig --add zope
-
-# disable this feature : it creates problem during update and
-# is confusing for somebody who don't care about installation message
-# zope display a how to create an administrative user if it doesn't exit
-# README.install.urpmi display the rest of the text
-
-# # write a 10 digit random default admin password into acl_users
-# passwd=`head -c4 /dev/urandom | od -tu4 -N4 | sed -ne '1s/.* //p'`
-# %{zopectl} adduser admin $passwd
-# # inform the user of the default username/password combo and port
-# echo
-# echo A Zope instance has been installed.  Run it via
-# echo \"/etc/rc.d/init.d/zope start\".  Log in via a browser on port 9080.
-# echo
-# echo Zope has default administrative username/password combination.  The
-# echo "administrative username is \"admin\" and the password is \"$passwd\"."
-# echo Please remember this so you are able to log in for the first time.
-# echo
 
 %preun
 %_preun_service zope
@@ -190,19 +143,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %doc README.install.urpmi
 
-#%defattr(644,root,root,755)
-#%config(noreplace) %attr(755,root,root) /etc/rc.d/init.d/zope
-#%attr(755,root,root) %{_bindir}/*
-#%attr(755,root,root) %{_sbindir}/*
-#%{_libdir}/zope
-#%attr(1771,root,zope) %dir /var/lib/zope
-#%attr(660,root,zope) %config(noreplace) %verify(not md5 size mtime) /var/lib/zope/*
-##%attr(640,root,root) %ghost /var/log/zope
-#%ghost /var/log/zope
-
-
-##############################################################################
-
 %package docs
 Summary:    Documentation for the Zope application server
 Group:      Networking/WWW
@@ -216,9 +156,3 @@ high-performance, integrated object database.
 %files docs
 %defattr(644, root, root, 755)
 %doc ZopeBook doc
-
-
-##############################################################################
-
-
-
