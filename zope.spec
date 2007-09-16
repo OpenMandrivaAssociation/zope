@@ -1,5 +1,5 @@
 %define name    zope 
-%define version 2.9.8
+%define version 2.10.4
 %define release %mkrel 1
 
 Name:           %{name}
