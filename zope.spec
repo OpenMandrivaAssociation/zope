@@ -1,6 +1,6 @@
 %define name    zope 
-%define version 2.10.4
-%define release %mkrel 2
+%define version 2.10.5
+%define release %mkrel 1
 
 Name:           %{name}
 Version:        %{version}
@@ -12,9 +12,13 @@ URL:            http://www.zope.org/
 Source0:        http://zope.org/Products/Zope/%{version}/Zope-%{version}-final.tgz
 Source1:        skel.tar.bz2
 Source2:        http://www.zope.org/Members/michel/ZB/ZopeBook.tar.bz2
-Requires:	    poppler
+%if %{mdkversion} >= 200800
+Requires:	poppler
+%else
+Requires:	xpdf-tools
+%endif
 Requires:       python2.4
-Requires:	    python2.4-libxml2
+Requires:	python2.4-libxml2
 BuildRequires:  python2.4-devel
 Epoch:          1
 BuildRoot:      %{_tmppath}/%{name}-%{version}
@@ -162,3 +166,4 @@ rm -rf %{buildroot}
 %defattr(-,root,root)
 %{_docdir}/%{name}/*
 %exclude %{_docdir}/%{name}/README.install.urpmi
+
