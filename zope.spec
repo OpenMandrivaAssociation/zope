@@ -1,6 +1,6 @@
 %define name    zope 
 %define version 2.10.5
-%define release %mkrel 1
+%define release %mkrel 2
 
 Name:           %{name}
 Version:        %{version}
@@ -22,8 +22,11 @@ Requires:	python2.4-libxml2
 BuildRequires:  python2.4-devel
 Epoch:          1
 BuildRoot:      %{_tmppath}/%{name}-%{version}
+Provides:	zope-BTreeFolder2
+Obsoletes:	zope-BTreeFolder2
 
 %define python /usr/bin/python2.4
+%define __python /usr/bin/python2.4
 %define zopehome /usr/lib/zope
 %define softwarehome %{zopehome}/lib/python
 %define instancehome /var/lib/zope
@@ -62,9 +65,6 @@ mv skel skel.bak
 tar xvjf %{SOURCE1}
 mv skel.bak/import/* skel/var/lib/zope/import/
 #rm skel/var/log/zope/README.txt skel/var/run/zope/README.txt
-
-# drop file which should not be there
-rm -rf lib/python/Products/BTreeFolder2
 
 %build
 ./configure \
@@ -115,9 +115,6 @@ rm -rf %{buildroot}
 #perl -pi -e "s|data_dir\s+=\s+.*?join\(INSTANCE_HOME, 'var'\)|data_dir=INSTANCE_HOME|" lib/python/Globals.py
 
 make install
-
-# will conflict with  zope-BTreeFolder2
-rm -rf %{buildroot}/%{softwarehome}/Products/BTreeFolder2
 
 # manage documentation manually
 install -d -m 755 %{buildroot}%{_docdir}/%{name}
