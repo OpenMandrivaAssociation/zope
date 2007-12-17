@@ -1,6 +1,8 @@
 %define name    zope 
 %define version 2.10.5
-%define release %mkrel 2
+%define release %mkrel 3
+%define __python /usr/bin/python2.4
+%{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
 Name:           %{name}
 Version:        %{version}
@@ -26,7 +28,6 @@ Provides:	zope-BTreeFolder2
 Obsoletes:	zope-BTreeFolder2
 
 %define python /usr/bin/python2.4
-%define __python /usr/bin/python2.4
 %define zopehome /usr/lib/zope
 %define softwarehome %{zopehome}/lib/python
 %define instancehome /var/lib/zope
@@ -61,10 +62,9 @@ high-performance, integrated object database.
 chmod 644 doc/*.txt
 
 # Add skel
-mv skel skel.bak
+mv skel skel.default
 tar xvjf %{SOURCE1}
-mv skel.bak/import/* skel/var/lib/zope/import/
-#rm skel/var/log/zope/README.txt skel/var/run/zope/README.txt
+mv skel.default/import/* skel/var/lib/zope/import/
 
 %build
 ./configure \
@@ -84,17 +84,9 @@ for file in files:
 EOF
 
 ## Clean sources
-#find -type d -name "tests" | xargs rm -rf
 find lib/python -type f -and \( -name 'Setup' -or -name '.cvsignore' \) \
     -exec rm -f \{\} \;
-#find -type f -and \( -name '*.c' -or -name '*.h' -or -name 'Makefile*' \) \
-#    -exec rm -f \{\} \;
 find -name "Win32" | xargs rm -rf
-rm -f ZServer/medusa/monitor_client_win32.py
-
-# Has a bogus #!/usr/local/bin/python1.4 that confuses RPM
-rm -f ZServer/medusa/test/asyn_http_bench.py
-
 
 %install
 rm -rf %{buildroot}
@@ -112,8 +104,6 @@ rm -rf %{buildroot}
          --replace="ZOPECTL:%{zopectl}" \
          --replace="RUNZOPE:%{runzope}"
 
-#perl -pi -e "s|data_dir\s+=\s+.*?join\(INSTANCE_HOME, 'var'\)|data_dir=INSTANCE_HOME|" lib/python/Globals.py
-
 make install
 
 # manage documentation manually
@@ -126,6 +116,17 @@ Log in via a browser on port 9080.
 You can add an administrative user when zope is stopped with the
 command "zopectl adduser admin admin_passwd".
 EOF
+
+# write zope.pth
+install -d %{buildroot}%{python_sitearch}
+echo "%{software_home}" > \
+    "%{buildroot}%{python_sitearch}/zope.pth"
+
+# Compile .pyc
+%{__python} -c "import compileall; \
+    compileall.compile_dir(\"$RPM_BUILD_ROOT%{zopehome}\", \
+    ddir=\"%{zopehome}\", force=1)"
+
 
 %clean
 rm -rf %{buildroot}
@@ -154,6 +155,7 @@ rm -rf %{buildroot}
 %{_initrddir}/zope
 %config(noreplace) %{_sysconfdir}/zope.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/zope
+%{python_sitearch}/zope.pth
 
 %attr(-,zope,zope) %config(noreplace) %verify(not md5 size mtime) %{instancehome}
 %attr(-,zope,zope) /var/log/zope
