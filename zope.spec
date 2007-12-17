@@ -1,8 +1,8 @@
 %define name    zope 
 %define version 2.10.5
-%define release %mkrel 3
+%define release %mkrel 4
 %define __python /usr/bin/python2.4
-%{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
+%define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
 
 Name:           %{name}
 Version:        %{version}
@@ -25,6 +25,9 @@ BuildRequires:  python2.4-devel
 Epoch:          1
 Provides:	zope-BTreeFolder2
 Obsoletes:	zope-BTreeFolder2
+%if %{mdkversion} <= 200800
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root
+%endif
 
 %define python /usr/bin/python2.4
 %define zopehome /usr/lib/zope
