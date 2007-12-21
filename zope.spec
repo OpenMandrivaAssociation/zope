@@ -23,6 +23,7 @@ Requires:       python2.4
 Requires:	python2.4-libxml2
 BuildRequires:  python2.4-devel
 Epoch:          1
+BuildRoot:      %{_tmppath}/%{name}-%{version}
 Provides:	zope-BTreeFolder2
 Obsoletes:	zope-BTreeFolder2
 %if %{mdkversion} <= 200800
