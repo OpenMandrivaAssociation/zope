@@ -1,7 +1,7 @@
 %define name    zope 
 %define version 2.10.5
-%define release %mkrel 4
-%define __python /usr/bin/python2.4
+%define release %mkrel 6
+%define __python %{_bindir}/python2.4
 %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
 
 Name:           %{name}
@@ -12,8 +12,8 @@ License:        Zope Public License (ZPL)
 Group:          System/Servers
 URL:            http://www.zope.org/
 Source0:        http://zope.org/Products/Zope/%{version}/Zope-%{version}-final.tgz
-Source1:        skel.tar.bz2
 Source2:        http://www.zope.org/Members/michel/ZB/ZopeBook.tar.bz2
+Patch0:		%{name}-%{version}-skel.patch
 %if %{mdkversion} >= 200800
 Requires:	poppler
 %else
@@ -23,31 +23,34 @@ Requires:       python2.4
 Requires:	python2.4-libxml2
 BuildRequires:  python2.4-devel
 Epoch:          1
-BuildRoot:      %{_tmppath}/%{name}-%{version}
 Provides:	zope-BTreeFolder2
 Obsoletes:	zope-BTreeFolder2
 %if %{mdkversion} <= 200800
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root
 %endif
 
-%define python /usr/bin/python2.4
-%define zopehome /usr/lib/zope
-%define softwarehome %{zopehome}/lib/python
-%define instancehome /var/lib/zope
-%define clienthome %{instancehome}/data
-%define statehome /var/run/zope
-%define loghome /var/log/zope
-%define configfile /etc/zope.conf
-%define zopectl /usr/bin/zopectl
-%define runzope /usr/bin/runzope
-%define zopeuser zope
+%define python		%{_bindir}/python2.4
+%define zope_home	%{_prefix}/lib/zope
+%define software_home	%{zope_home}/lib/python
+%define	instances_base	/var/lib/zope
+%define instance_home	%{instances_base}/default
+%define client_home	%{instance_home}/data
+%define state_home	/var/run/zope
+%define log_home	/var/log/zope
+%define config_file	/etc/zope.conf
+
+%define zopectl		%{_bindir}/zopectl
+%define runzope		%{instance_home}/bin/runzope
+%define zope_user	zope
+%define zope_group	%{zope_user}
 
 %description
-Zope is an open source application server for building content managements,
-intranets, portals, and custom applications. The Zope community consists of
-hundreds of companies and thousands of developers all over the world, working
-on building the platform and Zope applications. Zope is written in Python, a
-highly-productive, object-oriented scripting language.
+Zope is an open source application server for building content
+managements, intranets, portals, and custom applications. The Zope
+community consists of hundreds of companies and thousands of
+developers all over the world, working on building the platform and
+Zope applications. Zope is written in Python, a highly-productive,
+object-oriented scripting language.
 
 %package doc
 Summary:    Documentation for the Zope application server
@@ -55,24 +58,28 @@ Group:      Networking/WWW
 Obsoletes:  %{name}-docs
 
 %description doc
-Documentation for the Z Object Programming Environment (Zope), a free, Open
-Source Python-based application server for building high-performance, dynamic
-web sites, using a powerful and simple scripting object model and
-high-performance, integrated object database.
+Documentation for the Z Object Programming Environment (Zope), a free,
+Open Source Python-based application server for building
+high-performance, dynamic web sites, using a powerful and simple
+scripting object model and high-performance, integrated object
+database.
 
 %prep
 %setup -q -n Zope-%{version}-final
+%patch0 -p1
 chmod 644 doc/*.txt
 
 # Add skel
-mv skel skel.default
-tar xvjf %{SOURCE1}
-mv skel.default/import/* skel/var/lib/zope/import/
+chmod 644 skel/import/README.txt
+rm -f skel/bin/runzope.bat.in \
+      skel/bin/zopeservice.py.in
+rm -rf skel/var
+mkdir -p skel/run skel/data skel/var/pts
 
 %build
 ./configure \
   --with-python="%{python}" \
-  --prefix="%{buildroot}%{zopehome}" \
+  --prefix="%{buildroot}%{zope_home}" \
   --no-compile
 make
 
@@ -82,32 +89,36 @@ import py_compile, os
 files = os.popen("find lib -name '*.py'").readlines()
 for file in files:
     file = file.strip()
-    py_compile.compile(file, file+"o", "%{zopehome}/"+file)
-    py_compile.compile(file, file+"c", "%{zopehome}/"+file)
+    py_compile.compile(file, file+"o", "%{zope_home}/"+file)
+    py_compile.compile(file, file+"c", "%{zope_home}/"+file)
 EOF
 
 ## Clean sources
 find lib/python -type f -and \( -name 'Setup' -or -name '.cvsignore' \) \
     -exec rm -f \{\} \;
-find -name "Win32" | xargs rm -rf
+find -name "Win32" -print0 | xargs -0 rm -rf
+find -name '*.bat$' -print0 | xargs -0 rm -f
 
 %install
 rm -rf %{buildroot}
 %{python} "utilities/copyzopeskel.py" \
          --sourcedir="skel" \
-         --targetdir="%{buildroot}" \
-         --replace="INSTANCE_HOME:%{instancehome}" \
-         --replace="CLIENT_HOME:%{clienthome}" \
-         --replace="STATE_DIR:%{statehome}" \
-         --replace="LOG_DIR:%{loghome}" \
-         --replace="SOFTWARE_HOME:%{softwarehome}" \
-         --replace="ZOPE_HOME:%{zopehome}" \
-         --replace="CONFIG_FILE:%{configfile}" \
+         --targetdir="%{buildroot}%{instance_home}" \
+         --replace="INSTANCE_HOME:%{instance_home}" \
+	 --replace="INSTANCES_BASE:%{instances_base}" \
+         --replace="CLIENT_HOME:%{client_home}" \
+         --replace="STATE_DIR:%{state_home}" \
+         --replace="LOG_DIR:%{log_home}" \
+         --replace="SOFTWARE_HOME:%{software_home}" \
+         --replace="ZOPE_HOME:%{zope_home}" \
+         --replace="CONFIG_FILE:%{config_file}" \
          --replace="PYTHON:%{python}" \
          --replace="ZOPECTL:%{zopectl}" \
-         --replace="RUNZOPE:%{runzope}"
+         --replace="RUNZOPE:%{runzope}" \
+         --replace="ZOPE_USER:%{zope_user}"
 
 make install
+mkdir -p %{buildroot}%{instances_base}/log
 
 # manage documentation manually
 install -d -m 755 %{buildroot}%{_docdir}/%{name}
@@ -127,15 +138,64 @@ echo "%{software_home}" > \
 
 # Compile .pyc
 %{__python} -c "import compileall; \
-    compileall.compile_dir(\"$RPM_BUILD_ROOT%{zopehome}\", \
-    ddir=\"%{zopehome}\", force=1)"
+    compileall.compile_dir(\"$RPM_BUILD_ROOT%{zope_home}\", \
+    ddir=\"%{zope_home}\", force=1)"
 
+mkdir -p %{buildroot}%{_bindir} \
+	%{buildroot}%{_sysconfdir}/sysconfig \
+	%{buildroot}%{_sysconfdir}/logrotate.d \
+	%{buildroot}%{_initrddir}
+
+cat > %{buildroot}/%{_bindir}/zopectl <<EOF
+. %{_sysconfdir}/sysconfig/zope
+for instance in \$ZOPE_INSTANCES; do
+	\$instance/bin/zopectl "\$@"
+done
+EOF
+chmod 744 %{buildroot}/%{_bindir}/zopectl
+cat > %{buildroot}%{_sysconfdir}/sysconfig/zope <<EOF
+#!/bin/sh
+# List here your zope instances, space separated
+# (e.g. ZOPE_INSTANCES="/var/lib/zope/default /var/lib/zope/other")
+# This file it's used by the global %{_bindir}/zopectl
+ZOPE_INSTANCES="%{instance_home}"
+EOF
+
+cp -p %{buildroot}%{instance_home}/etc/logrotate.d/zope \
+	%{buildroot}%{_sysconfdir}/logrotate.d/
+
+cp -p %{buildroot}%{instance_home}/etc/rc.d/init.d/zope \
+	%{buildroot}%{_initrddir}/
+chmod 744 %{buildroot}%{_initrddir}/*
+
+rm -rf %{buildroot}%{instance_home}/etc/logrotate.d \
+       %{buildroot}%{zope_home}/etc/logrotate.d \
+       %{buildroot}%{instance_home}/etc/rc.d \
+       %{buildroot}%{zope_home}/etc/rc.d
+
+# fix permissions
+find %{buildroot}%{zope_home} -type f \
+	\( \
+	-name '*.txt' \
+	-o -name '*.jpg' \
+	-o -name '*.gif' \
+	-o -name '*.*tml' \
+	\) \
+	-print0 | xargs -0 chmod 644 || :
+find %{buildroot}%{instance_home} -type f \
+	\( \
+	-name '*.txt' \
+	-o -name '*.jpg' \
+	-o -name '*.gif' \
+	-o -name '*.*tml' \
+	\) \
+	-print0 | xargs -0 chmod 644 || :
 
 %clean
 rm -rf %{buildroot}
 
 %pre
-%_pre_useradd zope /var/lib/zope /bin/false
+%_pre_useradd %{zope_user} %{instance_home} /bin/false
 
 %post
 %_post_service zope
@@ -145,24 +205,22 @@ rm -rf %{buildroot}
 %_preun_service zope
 
 %postun
-%_postun_userdel zope
+%_postun_userdel %{zope_user}
 
 %files
 %defattr(-,root,root)
 %dir %{_docdir}/%{name}
 %{_docdir}/%{name}/README.install.urpmi
-%{zopehome}
-
-%{_bindir}/runzope
-%{_bindir}/zopectl
-%{_initrddir}/zope
-%config(noreplace) %{_sysconfdir}/zope.conf
-%config(noreplace) %{_sysconfdir}/logrotate.d/zope
+%{zope_home}
+%attr(744,root,root) %{_bindir}/zopectl
+%attr(744,root,root) %config(noreplace) %{_initrddir}/zope
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/zope
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/zope
 %{python_sitearch}/zope.pth
-
-%attr(-,zope,zope) %config(noreplace) %verify(not md5 size mtime) %{instancehome}
-%attr(-,zope,zope) /var/log/zope
-%attr(-,zope,zope) /var/run/zope
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}
+%attr(-,root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/etc
+%attr(-,root,%{zope_group}) %dir %{instance_home}/bin
+%attr(754,root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/bin/*
 
 %files doc
 %defattr(-,root,root)
