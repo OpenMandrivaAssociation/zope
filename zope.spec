@@ -1,6 +1,6 @@
 %define name    zope 
 %define version 2.10.5
-%define release %mkrel 6
+%define release %mkrel 7
 %define __python %{_bindir}/python2.4
 %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
 
@@ -217,10 +217,21 @@ rm -rf %{buildroot}
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/zope
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/zope
 %{python_sitearch}/zope.pth
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}
-%attr(-,root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/etc
-%attr(-,root,%{zope_group}) %dir %{instance_home}/bin
-%attr(754,root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/bin/*
+
+%attr(-,%{zope_user},%{zope_group}) %dir %{instances_base}
+%attr(-,%{zope_user},%{zope_group}) %dir %{instance_home}
+%attr(-,        root,%{zope_group}) %dir %{instance_home}/bin
+%attr(754,      root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/bin/*
+%attr(-,        root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/etc
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/data
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/Extensions
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/import
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/lib
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/log
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/Products
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/run
+%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/var
+%attr(-,        root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/README.txt
 
 %files doc
 %defattr(-,root,root)
