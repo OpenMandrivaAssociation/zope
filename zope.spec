@@ -1,6 +1,6 @@
 %define name    zope 
 %define version 2.10.5
-%define release %mkrel 7
+%define release %mkrel 9
 %define __python %{_bindir}/python2.4
 %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
 
