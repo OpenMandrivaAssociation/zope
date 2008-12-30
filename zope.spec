@@ -1,5 +1,5 @@
 %define name    zope 
-%define version 2.10.5
+%define version 2.11.2
 %define release %mkrel 10
 %define __python %{_bindir}/python2.4
 %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
@@ -13,7 +13,7 @@ Group:          System/Servers
 URL:            http://www.zope.org/
 Source0:        http://zope.org/Products/Zope/%{version}/Zope-%{version}-final.tgz
 Source2:        http://www.zope.org/Members/michel/ZB/ZopeBook.tar.bz2
-Patch0:		%{name}-%{version}-skel.patch
+Patch0:		zope-2.11.2-skel.patch
 %if %{mdkversion} >= 200800
 Requires:	poppler
 %else
