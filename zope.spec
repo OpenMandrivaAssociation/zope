@@ -1,8 +1,19 @@
 %define name    zope 
-%define version 2.11.2
-%define release %mkrel 11
-%define __python %{_bindir}/python2.4
-%define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
+%define version 2.11.4
+%define release %mkrel 1
+
+%define python          %{_bindir}/python2.4
+%define python_sitearch %(%{python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
+%define zope_home       %{_prefix}/lib/zope
+%define software_home   %{zope_home}/lib/python
+%define instances_base  %{_localstatedir}/lib/zope
+%define instance_home   %{instances_base}/default
+%define client_home     %{instance_home}/data
+%define runzope         %{instance_home}/bin/runzope
+%define state_home      %{_localstatedir}/run/zope
+%define log_home        %{_localstatedir}/log/zope
+%define config_file     %{_sysconfdir}/zope.conf
+%define zopectl         %{_bindir}/zopectl
 
 Name:           %{name}
 Version:        %{version}
@@ -13,36 +24,14 @@ Group:          System/Servers
 URL:            http://www.zope.org/
 Source0:        http://zope.org/Products/Zope/%{version}/Zope-%{version}-final.tgz
 Source2:        http://www.zope.org/Members/michel/ZB/ZopeBook.tar.bz2
-Patch0:		zope-2.11.2-skel.patch
-%if %{mdkversion} >= 200800
-Requires:	poppler
-%else
-Requires:	xpdf-tools
-%endif
+Patch0:         zope-2.11.2-skel.patch
+Requires:       poppler
 Requires:       python2.4
-Requires:	python2.4-libxml2
+Requires:       python2.4-libxml2
 BuildRequires:  python2.4-devel
 Epoch:          1
-Provides:	zope-BTreeFolder2
-Obsoletes:	zope-BTreeFolder2
-%if %{mdkversion} <= 200800
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root
-%endif
+BuildRoot:      %{_tmppath}/%{name}-%{version}
 
-%define python		%{_bindir}/python2.4
-%define zope_home	%{_prefix}/lib/zope
-%define software_home	%{zope_home}/lib/python
-%define	instances_base	/var/lib/zope
-%define instance_home	%{instances_base}/default
-%define client_home	%{instance_home}/data
-%define state_home	/var/run/zope
-%define log_home	/var/log/zope
-%define config_file	/etc/zope.conf
-
-%define zopectl		%{_bindir}/zopectl
-%define runzope		%{instance_home}/bin/runzope
-%define zope_user	zope
-%define zope_group	%{zope_user}
 
 %description
 Zope is an open source application server for building content
@@ -105,7 +94,7 @@ rm -rf %{buildroot}
          --sourcedir="skel" \
          --targetdir="%{buildroot}%{instance_home}" \
          --replace="INSTANCE_HOME:%{instance_home}" \
-	 --replace="INSTANCES_BASE:%{instances_base}" \
+         --replace="INSTANCES_BASE:%{instances_base}" \
          --replace="CLIENT_HOME:%{client_home}" \
          --replace="STATE_DIR:%{state_home}" \
          --replace="LOG_DIR:%{log_home}" \
@@ -115,7 +104,7 @@ rm -rf %{buildroot}
          --replace="PYTHON:%{python}" \
          --replace="ZOPECTL:%{zopectl}" \
          --replace="RUNZOPE:%{runzope}" \
-         --replace="ZOPE_USER:%{zope_user}"
+         --replace="ZOPE_USER:zope"
 
 make install
 mkdir -p %{buildroot}%{instances_base}/log
@@ -137,19 +126,19 @@ echo "%{software_home}" > \
     "%{buildroot}%{python_sitearch}/zope.pth"
 
 # Compile .pyc
-%{__python} -c "import compileall; \
-    compileall.compile_dir(\"$RPM_BUILD_ROOT%{zope_home}\", \
+%{python} -c "import compileall; \
+    compileall.compile_dir(\"%{buildroot}%{zope_home}\", \
     ddir=\"%{zope_home}\", force=1)"
 
 mkdir -p %{buildroot}%{_bindir} \
-	%{buildroot}%{_sysconfdir}/sysconfig \
-	%{buildroot}%{_sysconfdir}/logrotate.d \
-	%{buildroot}%{_initrddir}
+    %{buildroot}%{_sysconfdir}/sysconfig \
+    %{buildroot}%{_sysconfdir}/logrotate.d \
+    %{buildroot}%{_initrddir}
 
 cat > %{buildroot}/%{_bindir}/zopectl <<EOF
 . %{_sysconfdir}/sysconfig/zope
 for instance in \$ZOPE_INSTANCES; do
-	\$instance/bin/zopectl "\$@"
+    \$instance/bin/zopectl "\$@"
 done
 EOF
 chmod 744 %{buildroot}/%{_bindir}/zopectl
@@ -162,10 +151,10 @@ ZOPE_INSTANCES="%{instance_home}"
 EOF
 
 cp -p %{buildroot}%{instance_home}/etc/logrotate.d/zope \
-	%{buildroot}%{_sysconfdir}/logrotate.d/
+    %{buildroot}%{_sysconfdir}/logrotate.d/
 
 cp -p %{buildroot}%{instance_home}/etc/rc.d/init.d/zope \
-	%{buildroot}%{_initrddir}/
+    %{buildroot}%{_initrddir}/
 chmod 744 %{buildroot}%{_initrddir}/*
 
 rm -rf %{buildroot}%{instance_home}/etc/logrotate.d \
@@ -175,27 +164,27 @@ rm -rf %{buildroot}%{instance_home}/etc/logrotate.d \
 
 # fix permissions
 find %{buildroot}%{zope_home} -type f \
-	\( \
-	-name '*.txt' \
-	-o -name '*.jpg' \
-	-o -name '*.gif' \
-	-o -name '*.*tml' \
-	\) \
-	-print0 | xargs -0 chmod 644 || :
+    \( \
+    -name '*.txt' \
+    -o -name '*.jpg' \
+    -o -name '*.gif' \
+    -o -name '*.*tml' \
+    \) \
+    -print0 | xargs -0 chmod 644 || :
 find %{buildroot}%{instance_home} -type f \
-	\( \
-	-name '*.txt' \
-	-o -name '*.jpg' \
-	-o -name '*.gif' \
-	-o -name '*.*tml' \
-	\) \
-	-print0 | xargs -0 chmod 644 || :
+    \( \
+    -name '*.txt' \
+    -o -name '*.jpg' \
+    -o -name '*.gif' \
+    -o -name '*.*tml' \
+    \) \
+    -print0 | xargs -0 chmod 644 || :
 
 %clean
 rm -rf %{buildroot}
 
 %pre
-%_pre_useradd %{zope_user} %{instance_home} /bin/false
+%_pre_useradd zope %{instance_home} /bin/false
 
 %post
 %_post_service zope
@@ -205,33 +194,32 @@ rm -rf %{buildroot}
 %_preun_service zope
 
 %postun
-%_postun_userdel %{zope_user}
+%_postun_userdel zope
 
 %files
 %defattr(-,root,root)
 %dir %{_docdir}/%{name}
 %{_docdir}/%{name}/README.install.urpmi
 %{zope_home}
-%attr(744,root,root) %{_bindir}/zopectl
-%attr(744,root,root) %config(noreplace) %{_initrddir}/zope
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/zope
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/zope
+%{_bindir}/zopectl
+%{_initrddir}/zope
+%config(noreplace) %{_sysconfdir}/logrotate.d/zope
+%config(noreplace) %{_sysconfdir}/sysconfig/zope
 %{python_sitearch}/zope.pth
 
-%attr(-,%{zope_user},%{zope_group}) %dir %{instances_base}
-%attr(-,%{zope_user},%{zope_group}) %dir %{instance_home}
-%attr(-,        root,%{zope_group}) %dir %{instance_home}/bin
-%attr(754,      root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/bin/*
-%attr(-,        root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/etc
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/data
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/Extensions
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/import
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/lib
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/log
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/Products
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/run
-%attr(-,%{zope_user},%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/var
-%attr(-,        root,%{zope_group}) %config(noreplace) %verify(not md5 size mtime) %{instance_home}/README.txt
+%attr(-,zope,zope) %dir %{instances_base}
+%attr(-,zope,zope) %dir %{instance_home}
+%attr(-,root,zope) %config(noreplace) %{instance_home}/bin
+%attr(-,root,zope) %config(noreplace) %{instance_home}/etc
+%attr(-,zope,zope) %config(noreplace) %{instance_home}/data
+%attr(-,zope,zope) %config(noreplace) %{instance_home}/Extensions
+%attr(-,zope,zope) %config(noreplace) %{instance_home}/import
+%attr(-,zope,zope) %config(noreplace) %{instance_home}/lib
+%attr(-,zope,zope) %config(noreplace) %{instance_home}/log
+%attr(-,zope,zope) %config(noreplace) %{instance_home}/Products
+%attr(-,zope,zope) %config(noreplace) %{instance_home}/run
+%attr(-,zope,zope) %config(noreplace) %{instance_home}/var
+%attr(-,root,zope) %config(noreplace) %{instance_home}/README.txt
 
 %files doc
 %defattr(-,root,root)
