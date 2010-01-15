@@ -1,5 +1,5 @@
 %define name    zope 
-%define version 2.11.4
+%define version 2.11.6
 %define release %mkrel 1
 
 %define python          %{_bindir}/python2.4
