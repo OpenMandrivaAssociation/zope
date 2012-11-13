@@ -1,0 +1,223 @@
+diff -Naur --exclude '*~' --exclude '*.orig' --exclude '*.rej' Zope-2.11.2-final/skel/bin/zopectl.in Zope-2.11.2-final-skel/skel/bin/zopectl.in
+--- Zope-2.11.2-final/skel/bin/zopectl.in	2008-10-22 13:59:05.000000000 +0200
++++ Zope-2.11.2-final-skel/skel/bin/zopectl.in	2008-12-30 20:26:45.000000000 +0100
+@@ -3,8 +3,9 @@
+ PYTHON="<<PYTHON>>"
+ ZOPE_HOME="<<ZOPE_HOME>>"
+ INSTANCE_HOME="<<INSTANCE_HOME>>"
+-CONFIG_FILE="<<INSTANCE_HOME>>/etc/zope.conf"
+ SOFTWARE_HOME="<<SOFTWARE_HOME>>"
++CONFIG_FILE="<<INSTANCE_HOME>>/etc/zope.conf"
++
+ PYTHONPATH="$SOFTWARE_HOME:$PYTHONPATH"
+ export PYTHONPATH INSTANCE_HOME SOFTWARE_HOME
+ 
+diff -Naur --exclude '*~' --exclude '*.orig' --exclude '*.rej' Zope-2.11.2-final/skel/etc/logrotate.d/zope.in Zope-2.11.2-final-skel/skel/etc/logrotate.d/zope.in
+--- Zope-2.11.2-final/skel/etc/logrotate.d/zope.in	1970-01-01 01:00:00.000000000 +0100
++++ Zope-2.11.2-final-skel/skel/etc/logrotate.d/zope.in	2008-12-30 20:26:45.000000000 +0100
+@@ -0,0 +1,11 @@
++<<INSTANCES_BASE>>/*/log/event.log <<INSTANCES_BASE>>/*/log/Z2.log <<INSTANCES_BASE>>/*/log/trace.log {
++    sharedscripts
++    rotate 52
++    dateext
++    weekly
++    compress
++    missingok
++    postrotate
++        "<<ZOPECTL>>" logreopen > /dev/null 2>&1
++    endscript
++}
+diff -Naur --exclude '*~' --exclude '*.orig' --exclude '*.rej' Zope-2.11.2-final/skel/etc/rc.d/init.d/zope.in Zope-2.11.2-final-skel/skel/etc/rc.d/init.d/zope.in
+--- Zope-2.11.2-final/skel/etc/rc.d/init.d/zope.in	1970-01-01 01:00:00.000000000 +0100
++++ Zope-2.11.2-final-skel/skel/etc/rc.d/init.d/zope.in	2008-12-30 20:26:46.000000000 +0100
+@@ -0,0 +1,83 @@
++#!/bin/sh
++# Startup script for Zope
++#
++# chkconfig: 2345 80 20
++# description: Zope the web application server
++#
++# config: $instance/etc/zope.conf
++
++# Source function library.
++. /etc/init.d/functions
++
++RETVAL=0
++zopectl="<<ZOPECTL>>"
++user="<<ZOPE_USER>>"
++prog="zope"
++
++start() {
++        echo -n $"Starting $prog: "
++        output=`$zopectl -u $user start 2>/dev/null`
++        # the return status of zopectl is not reliable, we need to parse
++        # its output via substring match
++        if echo $output | grep -q "started"; then
++            # success
++            touch /var/lock/subsys/$prog
++            success
++            echo
++            RETVAL=0
++        else
++            # failed
++            failure
++            echo
++            RETVAL=1
++        fi
++        return $RETVAL
++}
++
++stop() {
++        echo -n $"Stopping $prog: "
++        output=`$zopectl -u $user stop 2>/dev/null`
++        # the return status of zopectl is not reliable, we need to parse
++        # its output via substring match
++        if echo $output | grep -q "stopped"; then
++            # success
++            rm -f /var/lock/subsys/$prog
++            success
++            echo
++            RETVAL=0
++        else
++            # failed
++            failure
++            echo
++            RETVAL=1
++        fi
++        return $RETVAL
++}
++
++restart() {
++	stop
++	start
++}
++
++case "$1" in
++  start)
++	start
++	;;
++  stop)
++	stop
++	;;
++  status)
++	$zopectl status
++	;;
++  restart)
++	restart
++	;;
++  condrestart)
++	$zopectl status | grep -qs "program running" && restart
++	;;
++  *)
++	echo $"Usage: $0 {start|stop|status|restart|condrestart}"
++	RETVAL=2
++esac
++
++exit $RETVAL
+diff -Naur --exclude '*~' --exclude '*.orig' --exclude '*.rej' Zope-2.11.2-final/skel/etc/zope.conf.in Zope-2.11.2-final-skel/skel/etc/zope.conf.in
+--- Zope-2.11.2-final/skel/etc/zope.conf.in	2008-10-22 13:59:06.000000000 +0200
++++ Zope-2.11.2-final-skel/skel/etc/zope.conf.in	2008-12-30 20:29:04.000000000 +0100
+@@ -51,6 +51,7 @@
+ #
+ #    clienthome /home/chrism/projects/sessions/var
+ 
++clienthome $INSTANCE/data
+ 
+ # Directive: path
+ #
+@@ -148,6 +149,7 @@
+ #
+ #    effective-user chrism
+ 
++effective-user <<ZOPE_USER>>
+ 
+ # Directive: enable-product-installation
+ #
+@@ -261,6 +263,7 @@
+ #
+ #    pid-filename /home/chrism/projects/sessions/var/Z2.pid
+ 
++pid-filename $INSTANCE/run/zope.pid
+ 
+ # Directive: lock-filename
+ #
+@@ -275,7 +278,8 @@
+ #
+ #    lock-filename /home/chrism/projects/sessions/var/Z2.lock
+ 
+-
++lock-filename $INSTANCE/run/zope.lock
++ 
+ # Directive: mime-types
+ #
+ # Description:
+@@ -800,7 +804,7 @@
+ #     will not be written anywhere.
+ 
+ <eventlog>
+-  level info
++  level all
+   <logfile>
+     path $INSTANCE/log/event.log
+     level info
+@@ -917,6 +921,7 @@
+ #
+ #     port-base 1000
+ 
++port-base 9000
+ 
+ # Directive: large-file-threshold
+ #
+@@ -966,7 +971,7 @@
+ 
+ <http-server>
+   # valid keys are "address" and "force-connection-close"
+-  address 8080
++  address 80
+ 
+   # force-connection-close on
+   #
+@@ -984,12 +989,25 @@
+ #    # valid key is "address"
+ #    address 8021
+ #  </ftp-server>
++
++<ftp-server>
++  # valid key is "address"
++  address 21
++</ftp-server>
++
+ #
+ #  <webdav-source-server>
+ #    # valid keys are "address" and "force-connection-close"
+ #    address 1980
+ #    force-connection-close off
+ #  </webdav-source-server>
++
++<webdav-source-server>
++  # valid keys are "address" and "force-connection-close"
++  address 81
++  force-connection-close off
++</webdav-source-server>
++
+ #
+ #  <persistent-cgi>
+ #    # valid key is "path"
+@@ -1041,7 +1059,7 @@
+ <zodb_db main>
+     # Main FileStorage database
+     <filestorage>
+-      path $INSTANCE/var/Data.fs
++      path $INSTANCE/data/Data.fs
+     </filestorage>
+     mount-point /
+ </zodb_db>
+@@ -1122,3 +1140,8 @@
+ #    <myproduct bar>
+ #      foo qux
+ #    </myproduct>
++
++# zoperunner section (tells zopectl where runzope is)
++#<zoperunner>
++#  program <<RUNZOPE>>
++#</zoperunner>
