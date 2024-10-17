@@ -21,7 +21,7 @@ Release:        %{release}
 Summary:        A leading open source application server
 License:        Zope Public License (ZPL)
 Group:          System/Servers
-URL:            http://www.zope.org/
+URL:            https://www.zope.org/
 Source0:        http://zope.org/Products/Zope/%{version}/Zope-%{version}-final.tgz
 Source2:        http://www.zope.org/Members/michel/ZB/ZopeBook.tar.bz2
 Patch0:         zope-2.11.2-skel.patch
