@@ -28,6 +28,11 @@ Patch0:         zope-2.11.2-skel.patch
 Requires:       poppler
 Requires:       python2.4
 Requires:       python2.4-libxml2
+BuildRequires:	autoconf
+BuildRequires:	automake
+BuildRequires:	libtool-base
+BuildRequires:	slibtool
+BuildRequires:	make
 BuildRequires:  python2.4-devel
 Epoch:          1
 BuildRoot:      %{_tmppath}/%{name}-%{version}
